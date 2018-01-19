@@ -1,0 +1,20 @@
+#!/bin/bash
+
+pcs cluster cib cfg
+pcs -f cfg resource create ClusterIP ocf:heartbeat:IPaddr2 ip=$1 cidr_netmask=32 op monitor interval=30s
+pcs -f cfg resource create mData ocf:linbit:drbd drbd_resource=mdata op monitor interval=30s
+pcs -f cfg resource master mDataClone mData master-max=1 master-node-max=1 clone-max=2 clone-node-max=1 notify=true
+pcs -f cfg resource create mFS Filesystem device="/dev/drbd1" directory="/etc/drbd/" fstype=xfs
+pcs -f cfg resource create management systemd:beegfs-mgmtd op monitor interval=30s
+
+
+pcs -f cfg constraint colocation add management with ClusterIP INFINITY
+pcs -f cfg constraint colocation add mFS with ClusterIP INFINITY
+pcs -f cfg constraint colocation add mFS with mDataClone INFINITY with-rsc-role=Master
+pcs -f cfg constraint colocation add ClusterIP with mDataClone INFINITY with-rsc-role=Master
+pcs -f cfg constraint colocation add management with mFS  INFINITY
+
+pcs -f cfg constraint order ClusterIP  then management
+pcs -f cfg constraint order promote mDataClone then start mFS
+pcs -f cfg constraint order mFS then management
+pcs cluster cib-push cfg

@@ -1,0 +1,41 @@
+Summary: storm api daemon
+Name: storm
+Version: %VERSION%
+Release: 1
+License: Storm EULA
+Source: storm-%VERSION%.tgz
+Group: Arcadata/fs
+BuildRoot: /tmp
+
+%define __debug_install_post   \
+   %{_rpmconfigdir}/find-debuginfo.sh %{?_find_debuginfo_opts} "%{_builddir}/%{?buildsubdir}"\
+%{nil}
+
+%description
+%prep
+%setup -c
+%build
+make version=%VERSION%
+
+%install
+mkdir -p ${RPM_BUILD_ROOT}/usr/bin/
+install ./storm ${RPM_BUILD_ROOT}/usr/bin/
+install ./storm ${RPM_BUILD_ROOT}/usr/bin/stormd
+ 
+mkdir -p ${RPM_BUILD_ROOT}/etc/init.d/
+install ./conf/stormd  ${RPM_BUILD_ROOT}/etc/init.d/
+
+mkdir -p ${RPM_BUILD_ROOT}/etc/stormd/lib/
+install ./conf/init-multi-mode ${RPM_BUILD_ROOT}/etc/stormd/lib/
+install ./conf/start-stop-functions ${RPM_BUILD_ROOT}/etc/stormd/lib/
+
+mkdir -p ${RPM_BUILD_ROOT}/usr/lib/systemd/system/
+install ./conf/storm.service ${RPM_BUILD_ROOT}/usr/lib/systemd/system/
+
+%files
+/usr/bin/storm
+/usr/bin/stormd
+/etc/init.d/stormd
+/etc/stormd/lib/start-stop-functions
+/etc/stormd/lib/init-multi-mode
+/usr/lib/systemd/system/storm.service

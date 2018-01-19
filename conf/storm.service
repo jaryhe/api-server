@@ -1,0 +1,20 @@
+[Unit]
+Description=Start BeeGFS Management Server
+Requires=network-online.target
+# We disable the wants service, because it spams the log files
+#Wants=openibd.service openib.service rdma.service opensmd.service opensm.service
+After=network-online.target openibd.service openib.service rdma.service opensmd.service opensm.service zfs.target
+
+[Service]
+ExecStart=/etc/init.d/stormd start
+ExecStop=/etc/init.d/stormd stop
+Type=forking
+# We disable PIDFile= because it doesn't work with multi-mode configurations
+#PIDFile=/var/run/storm.pid
+
+# If the sysTargetOfflineTimeoutSecs in beegfs-mgmtd.conf is set over 240, this value needs to be
+# adjusted accordingly. Recommendation: sysTargetOfflineTimeoutSecs + 60
+TimeoutStopSec=300
+
+[Install]
+WantedBy=multi-user.target
